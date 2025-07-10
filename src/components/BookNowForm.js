@@ -12,7 +12,7 @@ export default function BookNowForm() {
   });
 
   const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedTime, setSelectedTime] = useState(null);
+  const [selectedTime, setSelectedTime] = useState("");
   const [status, setStatus] = useState("idle");
 
   const handleChange = (e) => {
@@ -23,14 +23,19 @@ export default function BookNowForm() {
     e.preventDefault();
     setStatus("submitting");
 
-    const formattedDate = selectedDate ? selectedDate.toLocaleDateString() : "";
-    const formattedTime = selectedTime ? selectedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+    const formattedDate = selectedDate
+  ? selectedDate.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
+  : "";
 
     const payload = {
       data: {
         ...form,
         date: formattedDate,
-        time: formattedTime,
+        time: selectedTime,
       },
     };
 
@@ -43,27 +48,31 @@ export default function BookNowForm() {
 
       if (res.ok) {
         setStatus("success");
-        setForm({ name: "", phone: "", city: "", vehicle: "", issue: "" });
+        setForm({
+          name: "",
+          phone: "",
+          city: "",
+          vehicle: "",
+          issue: "",
+        });
         setSelectedDate(null);
-        setSelectedTime(null);
+        setSelectedTime("");
       } else {
         setStatus("error");
       }
     } catch (err) {
-      console.error("Error submitting form:", err);
+      console.error("Form submission error:", err);
       setStatus("error");
     }
   };
 
   return (
     <div className="w-full max-w-xl p-8 bg-white text-black rounded-2xl shadow-2xl relative">
-      <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 tracking-tight">
-        Book Your Service
-      </h2>
+      <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6">Book Your Service</h2>
 
       {status === "success" && (
         <div className="mb-6 text-green-700 bg-green-100 border border-green-300 rounded-lg p-4 text-sm text-center font-medium">
-          ✅ Your request has been shared. We’ll call you shortly.
+          ✅ Request submitted! We’ll call you shortly.
         </div>
       )}
 
@@ -83,7 +92,7 @@ export default function BookNowForm() {
             placeholder="Enter your name"
             value={form.name}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
             required
           />
         </div>
@@ -112,7 +121,7 @@ export default function BookNowForm() {
             name="city"
             value={form.city}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
             required
           >
             <option value="">Select City</option>
@@ -127,7 +136,7 @@ export default function BookNowForm() {
             name="vehicle"
             value={form.vehicle}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
             required
           >
             <option value="">Select Vehicle</option>
@@ -145,7 +154,7 @@ export default function BookNowForm() {
             name="issue"
             value={form.issue}
             onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
             required
           >
             <option value="">Select Issue</option>
@@ -161,51 +170,48 @@ export default function BookNowForm() {
           </select>
         </div>
 
-       <div className="flex flex-col sm:flex-row gap-4">
-  {/* Preferred Date */}
-  <div className="w-full sm:w-1/2">
-    <label className="block mb-1 text-sm font-semibold text-gray-700">Preferred Date</label>
-    <DatePicker
-      selected={selectedDate}
-      onChange={(date) => setSelectedDate(date)}
-      minDate={new Date()}
-      placeholderText="Select a date"
-      className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      required
-    />
-  </div>
+        {/* Date & Time */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="w-full sm:w-1/2">
+            <label className="block mb-1 text-sm font-semibold text-gray-700">Preferred Date</label>
+            <DatePicker
+              selected={selectedDate}
+              onChange={(date) => setSelectedDate(date)}
+              minDate={new Date()}
+              placeholderText="Select a date"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
 
-  {/* Preferred Time */}
-  <div className="w-full sm:w-1/2">
-  <label className="block mb-1 text-sm font-semibold text-gray-700">Preferred Time</label>
-  <select
-    name="time"
-    value={form.time}
-    onChange={handleChange}
-    className="w-full px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-    required
-    disabled={status === "submitting"}
-  >
-    <option value="">Select Time Slot</option>
-    <option value="09:00 AM – 10:00 AM">09:00 AM – 10:00 AM</option>
-    <option value="10:00 AM – 11:00 AM">10:00 AM – 11:00 AM</option>
-    <option value="11:00 AM – 12:00 PM">11:00 AM – 12:00 PM</option>
-    <option value="12:00 PM – 01:00 PM">12:00 PM – 01:00 PM</option>
-    <option value="01:00 PM – 02:00 PM">01:00 PM – 02:00 PM</option>
-    <option value="02:00 PM – 03:00 PM">02:00 PM – 03:00 PM</option>
-    <option value="03:00 PM – 04:00 PM">03:00 PM – 04:00 PM</option>
-    <option value="04:00 PM – 05:00 PM">04:00 PM – 05:00 PM</option>
-    <option value="05:00 PM – 06:00 PM">05:00 PM – 06:00 PM</option>
-  </select>
-</div>
-</div>
+          <div className="w-full sm:w-1/2">
+            <label className="block mb-1 text-sm font-semibold text-gray-700">Preferred Time</label>
+            <select
+              value={selectedTime}
+              onChange={(e) => setSelectedTime(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="">Select Time Slot</option>
+              <option value="09:00 AM – 10:00 AM">09:00 AM – 10:00 AM</option>
+              <option value="10:00 AM – 11:00 AM">10:00 AM – 11:00 AM</option>
+              <option value="11:00 AM – 12:00 PM">11:00 AM – 12:00 PM</option>
+              <option value="12:00 PM – 01:00 PM">12:00 PM – 01:00 PM</option>
+              <option value="01:00 PM – 02:00 PM">01:00 PM – 02:00 PM</option>
+              <option value="02:00 PM – 03:00 PM">02:00 PM – 03:00 PM</option>
+              <option value="03:00 PM – 04:00 PM">03:00 PM – 04:00 PM</option>
+              <option value="04:00 PM – 05:00 PM">04:00 PM – 05:00 PM</option>
+              <option value="05:00 PM – 06:00 PM">05:00 PM – 06:00 PM</option>
+              <option value="05:00 PM – 06:00 PM">06:00 PM – 07:00 PM</option>
+            </select>
+          </div>
+        </div>
 
-
-        {/* Submit Button */}
+        {/* Submit */}
         <button
           type="submit"
           disabled={status === "submitting"}
-          className="w-full bg-black text-white text-sm font-semibold py-3 rounded-lg hover:bg-gray-800 transition-all disabled:opacity-50"
+          className="w-full bg-black text-white text-sm font-semibold py-3 rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
         >
           {status === "submitting" ? "Submitting..." : "Submit Request"}
         </button>
