@@ -15,7 +15,7 @@ export default function BrandLogoSection() {
     <div className="w-full bg-white mt-20 pb-10 px-4">
       {/* Headline */}
       <div className="text-center text-gray-600 text-sm sm:text-base font-medium mb-6 opacity-80">
-        Trusted Partners
+        100+ Trusted Partners
       </div>
 
       {/* Logos */}

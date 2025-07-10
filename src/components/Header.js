@@ -12,8 +12,7 @@ export default function Header() {
           <span className="text-white font-semibold text-lg">AutoCare24</span>
         </Link>
         <div className="hidden sm:flex space-x-3 text-white/80 text-sm ml-4">
-          <span>Service</span>
-          <span>Repair</span>
+          <Link to="/service" className="hover:text-white underline">Service & Repair</Link>
           <Link to="/qikspare" className="hover:text-white underline">30-Min Spare</Link>
         </div>
       </div>
