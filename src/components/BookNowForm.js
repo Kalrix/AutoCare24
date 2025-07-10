@@ -177,20 +177,27 @@ export default function BookNowForm() {
 
   {/* Preferred Time */}
   <div className="w-full sm:w-1/2">
-    <label className="block mb-1 text-sm font-semibold text-gray-700">Preferred Time</label>
-    <DatePicker
-      selected={selectedTime}
-      onChange={(time) => setSelectedTime(time)}
-      showTimeSelect
-      showTimeSelectOnly
-      timeIntervals={30}
-      timeCaption="Time"
-      dateFormat="h:mm aa"
-      placeholderText="Select time"
-      className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      required
-    />
-  </div>
+  <label className="block mb-1 text-sm font-semibold text-gray-700">Preferred Time</label>
+  <select
+    name="time"
+    value={form.time}
+    onChange={handleChange}
+    className="w-full px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    required
+    disabled={status === "submitting"}
+  >
+    <option value="">Select Time Slot</option>
+    <option value="09:00 AM – 10:00 AM">09:00 AM – 10:00 AM</option>
+    <option value="10:00 AM – 11:00 AM">10:00 AM – 11:00 AM</option>
+    <option value="11:00 AM – 12:00 PM">11:00 AM – 12:00 PM</option>
+    <option value="12:00 PM – 01:00 PM">12:00 PM – 01:00 PM</option>
+    <option value="01:00 PM – 02:00 PM">01:00 PM – 02:00 PM</option>
+    <option value="02:00 PM – 03:00 PM">02:00 PM – 03:00 PM</option>
+    <option value="03:00 PM – 04:00 PM">03:00 PM – 04:00 PM</option>
+    <option value="04:00 PM – 05:00 PM">04:00 PM – 05:00 PM</option>
+    <option value="05:00 PM – 06:00 PM">05:00 PM – 06:00 PM</option>
+  </select>
+</div>
 </div>
 
 
