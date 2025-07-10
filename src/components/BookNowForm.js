@@ -1,15 +1,19 @@
 import React, { useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 export default function BookNowForm() {
   const [form, setForm] = useState({
     name: "",
     phone: "",
+    city: "",
     vehicle: "",
     issue: "",
-    city: "",
   });
 
-  const [status, setStatus] = useState("idle"); // idle | submitting | success | error
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedTime, setSelectedTime] = useState(null);
+  const [status, setStatus] = useState("idle");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -19,34 +23,29 @@ export default function BookNowForm() {
     e.preventDefault();
     setStatus("submitting");
 
+    const formattedDate = selectedDate ? selectedDate.toLocaleDateString() : "";
+    const formattedTime = selectedTime ? selectedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+
     const payload = {
       data: {
-        name: form.name,
-        phone: form.phone,
-        vehicle: form.vehicle,
-        issue: form.issue,
-        city: form.city,
+        ...form,
+        date: formattedDate,
+        time: formattedTime,
       },
     };
 
     try {
       const res = await fetch("https://sheetdb.io/api/v1/auvap76vv6re6", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         setStatus("success");
-        setForm({
-          name: "",
-          phone: "",
-          vehicle: "",
-          issue: "",
-          city: "",
-        });
+        setForm({ name: "", phone: "", city: "", vehicle: "", issue: "" });
+        setSelectedDate(null);
+        setSelectedTime(null);
       } else {
         setStatus("error");
       }
@@ -86,7 +85,6 @@ export default function BookNowForm() {
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
-            disabled={status === "submitting"}
           />
         </div>
 
@@ -103,7 +101,6 @@ export default function BookNowForm() {
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm outline-none"
               required
-              disabled={status === "submitting"}
             />
           </div>
         </div>
@@ -117,11 +114,9 @@ export default function BookNowForm() {
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
-            disabled={status === "submitting"}
           >
             <option value="">Select City</option>
             <option value="Bhopal">Bhopal</option>
-            
           </select>
         </div>
 
@@ -134,7 +129,6 @@ export default function BookNowForm() {
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
-            disabled={status === "submitting"}
           >
             <option value="">Select Vehicle</option>
             <option value="Bike">Bike</option>
@@ -153,7 +147,6 @@ export default function BookNowForm() {
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
-            disabled={status === "submitting"}
           >
             <option value="">Select Issue</option>
             <option value="General Service">General Service</option>
@@ -167,6 +160,39 @@ export default function BookNowForm() {
             <option value="Other">Other</option>
           </select>
         </div>
+
+       <div className="flex flex-col sm:flex-row gap-4">
+  {/* Preferred Date */}
+  <div className="w-full sm:w-1/2">
+    <label className="block mb-1 text-sm font-semibold text-gray-700">Preferred Date</label>
+    <DatePicker
+      selected={selectedDate}
+      onChange={(date) => setSelectedDate(date)}
+      minDate={new Date()}
+      placeholderText="Select a date"
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      required
+    />
+  </div>
+
+  {/* Preferred Time */}
+  <div className="w-full sm:w-1/2">
+    <label className="block mb-1 text-sm font-semibold text-gray-700">Preferred Time</label>
+    <DatePicker
+      selected={selectedTime}
+      onChange={(time) => setSelectedTime(time)}
+      showTimeSelect
+      showTimeSelectOnly
+      timeIntervals={30}
+      timeCaption="Time"
+      dateFormat="h:mm aa"
+      placeholderText="Select time"
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      required
+    />
+  </div>
+</div>
+
 
         {/* Submit Button */}
         <button
