@@ -1,7 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { HiArrowRight } from "react-icons/hi";
+import BookNowForm from "./components/BookNowForm";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 
 export default function App() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0055FF] to-black text-white font-sans relative overflow-hidden">
 
@@ -14,25 +19,8 @@ export default function App() {
       {/* Top Glow */}
       <div className="absolute top-0 left-1/2 transform -translate-x-1/2 h-72 w-[200%] bg-white opacity-10 blur-3xl pointer-events-none z-10" />
 
-      {/* Top Left – Logo + Info */}
-      <div className="absolute top-6 left-6 z-20 flex items-center space-x-4 text-sm sm:text-base opacity-90">
-        <img src="/logo.png" alt="AutoCare24 Logo" className="h-10 sm:h-12 w-auto" />
-        <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 font-medium">
-          <div className="tracking-wide text-white">Quick Book</div>
-          <div className="flex space-x-3 text-gray-300 text-xs sm:text-sm">
-            <span>Service</span>
-            <span>Repair</span>
-            <span>30-Min Spare</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Top Right – Login Button */}
-      <div className="absolute top-6 right-6 z-20">
-        <button className="border border-white text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-white hover:text-black transition">
-          Login
-        </button>
-      </div>
+      {/* Header */}
+      <Header />
 
       {/* Center Content */}
       <div className="flex flex-col items-center justify-center h-screen text-center z-20 relative px-6">
@@ -43,23 +31,38 @@ export default function App() {
           Because Quality Service, Repair & Spares Matter.
         </p>
         <div className="mt-10">
-          <button className="bg-white text-black px-8 py-3 text-sm font-semibold rounded-full hover:bg-gray-200 transition">
-            Book Now
+          <button
+            className="bg-white text-black px-8 py-3 text-sm font-semibold rounded-full hover:bg-gray-200 transition"
+            onClick={() => setIsModalOpen(true)}
+          >
+            Enquire Now
           </button>
         </div>
       </div>
 
-      {/* Bottom Left – Copyright */}
-      <footer className="absolute bottom-6 left-6 text-xs text-gray-400 z-20 opacity-60">
-        &copy; 2025 AutoCare24 | Powered by SangwanHQ
-      </footer>
+      {/* Modal */}
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 bg-white/5 backdrop-blur-md flex items-center justify-center z-50"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            className="bg-white text-black border border-white-200 rounded-2xl p-6 w-[90%] max-w-xl relative shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="absolute top-2 right-3 text-gray-500 hover:text-black text-xl"
+              onClick={() => setIsModalOpen(false)}
+            >
+              ×
+            </button>
+            <BookNowForm />
+          </div>
+        </div>
+      )}
 
-      {/* Bottom Right – About Us Link */}
-      <div className="absolute bottom-6 right-6 z-20 opacity-60">
-        <a href="/about" className="flex items-center text-xs text-gray-400 hover:text-white transition">
-          About Us <HiArrowRight className="ml-1 text-sm" />
-        </a>
-      </div>
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
