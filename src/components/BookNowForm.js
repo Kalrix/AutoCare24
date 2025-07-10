@@ -1,5 +1,4 @@
 import React, { useState } from "react";
- 
 
 export default function BookNowForm() {
   const [form, setForm] = useState({
@@ -7,6 +6,7 @@ export default function BookNowForm() {
     phone: "",
     vehicle: "",
     issue: "",
+    city: "",
   });
 
   const [status, setStatus] = useState("idle"); // idle | submitting | success | error
@@ -25,6 +25,7 @@ export default function BookNowForm() {
         phone: form.phone,
         vehicle: form.vehicle,
         issue: form.issue,
+        city: form.city,
       },
     };
 
@@ -33,15 +34,19 @@ export default function BookNowForm() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // If API key is needed:
-          // Authorization: "Bearer YOUR_API_KEY",
         },
         body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         setStatus("success");
-        setForm({ name: "", phone: "", vehicle: "", issue: "" });
+        setForm({
+          name: "",
+          phone: "",
+          vehicle: "",
+          issue: "",
+          city: "",
+        });
       } else {
         setStatus("error");
       }
@@ -57,14 +62,12 @@ export default function BookNowForm() {
         Book Your Service
       </h2>
 
-      {/* Success Message */}
       {status === "success" && (
         <div className="mb-6 text-green-700 bg-green-100 border border-green-300 rounded-lg p-4 text-sm text-center font-medium">
           ✅ Your request has been shared. We’ll call you shortly.
         </div>
       )}
 
-      {/* Error Message */}
       {status === "error" && (
         <div className="mb-6 text-red-700 bg-red-100 border border-red-300 rounded-lg p-4 text-sm text-center font-medium">
           ❌ Something went wrong. Please try again.
@@ -103,6 +106,23 @@ export default function BookNowForm() {
               disabled={status === "submitting"}
             />
           </div>
+        </div>
+
+        {/* City */}
+        <div>
+          <label className="block mb-1 text-sm font-semibold text-gray-700">City</label>
+          <select
+            name="city"
+            value={form.city}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+            disabled={status === "submitting"}
+          >
+            <option value="">Select City</option>
+            <option value="Bhopal">Bhopal</option>
+            
+          </select>
         </div>
 
         {/* Vehicle */}

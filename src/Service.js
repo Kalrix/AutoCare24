@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import BookNowForm from "./components/BookNowForm";
+import { HiOutlineMapPin, HiOutlinePhone } from "react-icons/hi2";
 
 export default function Service() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,23 +50,37 @@ export default function Service() {
       </section>
 
       {/* Operational Cities */}
-      <section className="mt-24 px-6 md:px-20 pb-24">
-        <h3 className="text-lg font-semibold text-gray-800 mb-6">Currently Operational In</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-          <div className="group border border-gray-200 p-4 rounded-xl bg-gray-50 hover:bg-white hover:shadow-md transition relative">
-            <p className="text-center font-semibold text-sm">Bhopal</p>
-            <div className="absolute inset-0 flex flex-col justify-center items-center bg-white/90 rounded-xl opacity-0 group-hover:opacity-100 transition duration-300 ease-in-out z-10">
-              <p className="text-xs text-gray-800">📞 +91 9109998340</p>
-              <button
-                className="mt-2 text-xs bg-black text-white px-4 py-1 rounded-full hover:bg-gray-900"
-                onClick={() => setIsModalOpen(true)}
-              >
-                Book Appointment
-              </button>
-            </div>
-          </div>
+<section className="mt-24 px-6 md:px-20 pb-24">
+  <h3 className="text-lg font-semibold text-gray-800 mb-6">Currently Operational In</h3>
+
+  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+    <div className="group relative border border-gray-200 rounded-xl overflow-hidden bg-gray-100 hover:bg-white hover:shadow-lg transition-all duration-300">
+      
+      {/* City Display */}
+      <div className="flex flex-col items-center justify-center p-6 space-y-1">
+        <HiOutlineMapPin className="text-[#0055FF] text-2xl group-hover:scale-110 transition-transform" />
+        <p className="text-sm font-semibold text-gray-800 group-hover:opacity-0 transition-opacity duration-300">
+          Bhopal
+        </p>
+      </div>
+
+      {/* Hover Overlay */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 px-4">
+        <div className="flex items-center text-sm text-gray-800 mb-2">
+          <HiOutlinePhone className="mr-2 text-lg text-[#0055FF]" />
+          <span>+91 9109998340</span>
         </div>
-      </section>
+        <button
+          className="text-xs bg-black text-white px-4 py-1 rounded-full hover:bg-gray-900 transition"
+          onClick={() => setIsModalOpen(true)}
+        >
+          Book Appointment
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
 
       {/* Modal */}
       {isModalOpen && (
