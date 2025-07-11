@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { supabase } from "../supabaseClient"; // make sure supabaseClient is configured correctly
 
 export default function BookNowForm() {
   const [form, setForm] = useState({
@@ -24,42 +25,35 @@ export default function BookNowForm() {
     setStatus("submitting");
 
     const formattedDate = selectedDate
-  ? selectedDate.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    })
-  : "";
+      ? selectedDate.toISOString().split("T")[0]
+      : "";
 
     const payload = {
-      data: {
-        ...form,
-        date: formattedDate,
-        time: selectedTime,
-      },
+      name: form.name,
+      phone: form.phone,
+      city: form.city,
+      vehicle: form.vehicle,
+      issue: form.issue,
+      date: formattedDate,
+      time: selectedTime,
+      source: "Website",
+      remark: "",
     };
 
     try {
-      const res = await fetch("https://sheetdb.io/api/v1/auvap76vv6re6", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const { error } = await supabase.from("leads").insert([payload]);
+      if (error) throw error;
 
-      if (res.ok) {
-        setStatus("success");
-        setForm({
-          name: "",
-          phone: "",
-          city: "",
-          vehicle: "",
-          issue: "",
-        });
-        setSelectedDate(null);
-        setSelectedTime("");
-      } else {
-        setStatus("error");
-      }
+      setStatus("success");
+      setForm({
+        name: "",
+        phone: "",
+        city: "",
+        vehicle: "",
+        issue: "",
+      });
+      setSelectedDate(null);
+      setSelectedTime("");
     } catch (err) {
       console.error("Form submission error:", err);
       setStatus("error");
@@ -82,6 +76,7 @@ export default function BookNowForm() {
         </div>
       )}
 
+
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Name */}
         <div>
@@ -103,14 +98,17 @@ export default function BookNowForm() {
           <div className="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
             <span className="bg-gray-100 text-gray-600 px-3 py-2 text-sm flex items-center">+91</span>
             <input
-              name="phone"
-              type="tel"
-              placeholder="1234567890"
-              value={form.phone}
-              onChange={handleChange}
-              className="w-full px-3 py-2 text-sm outline-none"
-              required
-            />
+  name="phone"
+  type="tel"
+  placeholder="1234567890"
+  value={form.phone}
+  onChange={handleChange}
+  pattern="[0-9]{10}"
+  maxLength={10}
+  className="w-full px-3 py-2 text-sm outline-none"
+  required
+/>
+
           </div>
         </div>
 
