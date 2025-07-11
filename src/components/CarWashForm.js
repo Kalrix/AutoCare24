@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { FiZap, FiCheckCircle, FiArrowLeft, FiDroplet, FiSun, FiWind } from "react-icons/fi";
+import { FiCheckCircle, FiArrowLeft, FiDroplet, FiSun } from "react-icons/fi";
 import { FaCarSide } from "react-icons/fa";
 
 const customDatePickerStyles = `
@@ -29,21 +29,57 @@ const washTypes = [
   { name: "Interior Detailing", price: 499, icon: <FiSun size={20} /> },
 ];
 
+const allTimeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
+
+function isSlotFuture(date, slot) {
+  const now = new Date();
+  const [hourStr, modifier] = slot.split(' ');
+  let [hour, minute] = hourStr.split(":").map(Number);
+  if (modifier === "PM" && hour !== 12) hour += 12;
+  if (modifier === "AM" && hour === 12) hour = 0;
+
+  const slotDateTime = new Date(date);
+  slotDateTime.setHours(hour, minute, 0, 0);
+
+  return slotDateTime > now;
+}
+
 export default function CarWashForm() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ name: "", phone: "", express: false, washType: "" });
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState("");
   const [status, setStatus] = useState("idle");
+  const [bookedSlots, setBookedSlots] = useState({});
 
-  const timeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
   const selectedWash = washTypes.find(w => w.name === form.washType);
   const total = useMemo(() => (selectedWash ? selectedWash.price : 0) + (form.express ? 199 : 0), [form, selectedWash]);
+
+  useEffect(() => {
+    const fetchSlots = async () => {
+      try {
+        const res = await fetch("https://sheetdb.io/api/v1/q6qnws041sjwl");
+        const data = await res.json();
+
+        const dateStr = selectedDate.toLocaleDateString("en-GB");
+        const slots = data.reduce((acc, entry) => {
+          if (entry.date === dateStr) {
+            acc[entry.time] = (acc[entry.time] || 0) + 1;
+          }
+          return acc;
+        }, {});
+        setBookedSlots(slots);
+      } catch (err) {
+        console.error("Failed to fetch bookings:", err);
+      }
+    };
+
+    fetchSlots();
+  }, [selectedDate]);
 
   const isNextDisabled = () => {
     if (step === 1) return !selectedTime;
     if (step === 2) return !form.washType;
-    if (step === 3) return false;
     if (step === 4) return !form.name || !form.phone;
     return false;
   };
@@ -84,6 +120,13 @@ export default function CarWashForm() {
 
   const StepTitle = ({ title }) => <h3 className="text-xl font-semibold text-gray-800 text-center mb-4">{title}</h3>;
 
+  const getSlotBgColor = (booked) => {
+    if (booked >= 8) return "bg-red-100";
+    if (booked >= 5) return "bg-yellow-100";
+    if (booked >= 1) return "bg-green-100";
+    return "bg-white";
+  };
+
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -92,12 +135,27 @@ export default function CarWashForm() {
             <StepTitle title="1. Select Date & Time" />
             <DatePicker selected={selectedDate} onChange={setSelectedDate} minDate={new Date()} dateFormat="MMMM d, yyyy" />
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
-              {timeSlots.map(time => (
-                <button key={time} onClick={() => setSelectedTime(time)} type="button"
-                  className={`p-3 border rounded-lg text-sm sm:text-base ${selectedTime === time ? "bg-blue-600 text-white" : "bg-white text-gray-700 border-gray-300 hover:border-blue-500"}`}>
-                  {time}
-                </button>
-              ))}
+              {allTimeSlots.map(time => {
+                const booked = bookedSlots[time] || 0;
+                const isFull = booked >= 10;
+                const isPast = !isSlotFuture(selectedDate, time);
+                const disabled = isFull || isPast;
+                const bgColor = getSlotBgColor(booked);
+                const slotLabel = isPast ? "🔥 Sold Out" : (isFull ? "Full" : `${10 - booked} left`);
+
+                return (
+                  <button
+                    key={time}
+                    disabled={disabled}
+                    onClick={() => setSelectedTime(time)}
+                    type="button"
+                    className={`p-3 border rounded-lg text-sm sm:text-base ${bgColor} ${selectedTime === time ? "border-blue-600 text-blue-800" : "text-gray-700 border-gray-300 hover:border-blue-500"} ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    {time}<br />
+                    <span className={`text-xs ${isPast ? "text-red-500 font-bold" : ""}`}>{slotLabel}</span>
+                  </button>
+                );
+              })}
             </div>
           </>
         );
@@ -162,7 +220,7 @@ export default function CarWashForm() {
   return (
     <>
       <style>{customDatePickerStyles}</style>
-      <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-2xl max-w-lg w-full mx-auto font-sans">
+      <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-2xl max-w-4xl w-full mx-auto font-sans">
         <div className="mb-6 sm:mb-8 text-center">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Book Your Car Wash, Don’t Wait!</h1>
           <p className="text-sm text-gray-600 mt-2">Foam Wash, Underbody, or Detailing — fast and clean, just the way it should be.</p>
