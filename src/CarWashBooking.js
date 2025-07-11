@@ -33,7 +33,7 @@ export default function CarWashBooking() {
 
         {/* Right Column: Booking Form */}
         <div className="w-full lg:w-1/2 bg-white text-black flex items-center justify-center px-4 py-12 sm:px-6 md:px-10 rounded-t-3xl lg:rounded-none shadow-2xl">
-          <div className="w-full max-w-lg">
+<div className="w-full bg-white text-black flex items-center justify-center px-4 py-12 sm:px-6 md:px-10 pt-20">
             <CarWashForm />
           </div>
         </div>
