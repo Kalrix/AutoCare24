@@ -18,6 +18,7 @@ export default function Header() {
 
       {/* Desktop Links */}
       <div className="hidden sm:flex space-x-5 text-white/80 text-sm ml-4">
+        <Link to="/carwash" className="hover:text-white underline">Book-Carwash</Link>
         <Link to="/service" className="hover:text-white underline">Service & Repair</Link>
         <Link to="/qikspare" className="hover:text-white underline">30-Min Spare</Link>
         <button className="border border-white text-white px-4 py-1 rounded-full text-sm font-medium hover:bg-white hover:text-[#0055FF] transition">
@@ -35,6 +36,9 @@ export default function Header() {
       {/* Mobile Menu Panel */}
       {menuOpen && (
         <div className="absolute top-[80px] left-0 w-full bg-[#0055FF] text-white flex flex-col items-start px-6 py-4 space-y-4 sm:hidden shadow-lg">
+          <Link to="/carwash" onClick={() => setMenuOpen(false)} className="text-sm underline">
+            Car Wash Booking
+          </Link>
           <Link to="/service" onClick={() => setMenuOpen(false)} className="text-sm underline">
             Service & Repair
           </Link>
