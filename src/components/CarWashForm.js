@@ -91,10 +91,10 @@ export default function CarWashForm() {
           <>
             <StepTitle title="1. Select Date & Time" />
             <DatePicker selected={selectedDate} onChange={setSelectedDate} minDate={new Date()} dateFormat="MMMM d, yyyy" />
-            <div className="grid grid-cols-4 gap-2 mt-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
               {timeSlots.map(time => (
                 <button key={time} onClick={() => setSelectedTime(time)} type="button"
-                  className={`p-3 border rounded-lg ${selectedTime === time ? "bg-blue-600 text-white" : "bg-white text-gray-700 border-gray-300 hover:border-blue-500"}`}>
+                  className={`p-3 border rounded-lg text-sm sm:text-base ${selectedTime === time ? "bg-blue-600 text-white" : "bg-white text-gray-700 border-gray-300 hover:border-blue-500"}`}>
                   {time}
                 </button>
               ))}
@@ -110,7 +110,7 @@ export default function CarWashForm() {
                 <div key={opt.name} onClick={() => setForm({ ...form, washType: opt.name })} className={`flex items-center p-4 border-2 rounded-lg cursor-pointer ${form.washType === opt.name ? "border-blue-600 bg-blue-50" : "border-gray-300 hover:border-blue-500"}`}>
                   <div className="text-blue-600">{opt.icon}</div>
                   <div className="ml-4">
-                    <p className="text-lg font-semibold">{opt.name}</p>
+                    <p className="text-base sm:text-lg font-semibold">{opt.name}</p>
                     <p className="text-sm text-gray-600">₹{opt.price}</p>
                   </div>
                 </div>
@@ -122,7 +122,7 @@ export default function CarWashForm() {
         return (
           <>
             <StepTitle title="3. Do You Want Express Service?" />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button onClick={() => setForm({ ...form, express: false })} type="button" className={`p-4 border rounded-lg ${!form.express ? "bg-blue-600 text-white" : "border-gray-300 bg-white"}`}>No Extra Cost</button>
               <button onClick={() => setForm({ ...form, express: true })} type="button" className={`p-4 border rounded-lg ${form.express ? "bg-blue-600 text-white" : "border-gray-300 bg-white"}`}>Express +₹199</button>
             </div>
@@ -138,7 +138,7 @@ export default function CarWashForm() {
         );
       case 5:
         return (
-          <div className="text-center space-y-6 p-8">
+          <div className="text-center space-y-6 p-6 sm:p-8">
             {status === "success" ? (
               <>
                 <FiCheckCircle size={60} className="mx-auto text-blue-600" />
@@ -162,9 +162,9 @@ export default function CarWashForm() {
   return (
     <>
       <style>{customDatePickerStyles}</style>
-      <div className="bg-white p-6 sm:p-8 rounded-xl shadow-2xl max-w-xl mx-auto font-sans">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Book Your Car Wash, Don’t Wait!</h1>
+      <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-2xl max-w-lg w-full mx-auto font-sans">
+        <div className="mb-6 sm:mb-8 text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Book Your Car Wash, Don’t Wait!</h1>
           <p className="text-sm text-gray-600 mt-2">Foam Wash, Underbody, or Detailing — fast and clean, just the way it should be.</p>
         </div>
         {step <= 4 && (
@@ -175,9 +175,9 @@ export default function CarWashForm() {
               </div>
             </div>
             {renderStep()}
-            <div className="flex gap-4 mt-8">
+            <div className="flex flex-col sm:flex-row gap-4 mt-8">
               {step > 1 && (
-                <button onClick={() => setStep(step - 1)} className="w-1/3 bg-gray-200 text-gray-800 font-bold py-3 rounded-lg hover:bg-gray-300 transition">
+                <button onClick={() => setStep(step - 1)} className="sm:w-1/3 bg-gray-200 text-gray-800 font-bold py-3 rounded-lg hover:bg-gray-300 transition">
                   <FiArrowLeft className="inline mr-2" />Back
                 </button>
               )}
