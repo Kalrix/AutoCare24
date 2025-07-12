@@ -1,8 +1,61 @@
+"use client";
+
 import React, { useState, useEffect, useMemo } from "react";
 import { FiCheckCircle, FiArrowLeft } from "react-icons/fi";
 import { supabase } from "../supabaseClient";
 
-// Prices based on your image
+// Helper functions
+function formatDate(date) {
+  return date.toISOString().split("T")[0];
+}
+
+function getNext7Days() {
+  const now = new Date();
+  const days = [];
+  let added = 0;
+  let i = 0;
+  while (added < 7) {
+    const d = new Date();
+    d.setDate(now.getDate() + i);
+    const isToday = i === 0;
+    const isAfter5PM = now.getHours() >= 17;
+    if (isToday && isAfter5PM) {
+      i++;
+      continue;
+    }
+    days.push(d);
+    i++;
+    added++;
+  }
+  return days;
+}
+
+function isSlotFuture(date, slot) {
+  const now = new Date();
+  const [hourStr, modifier] = slot.split(" ");
+  let [hour, minute] = hourStr.split(":").map(Number);
+  if (modifier === "PM" && hour !== 12) hour += 12;
+  if (modifier === "AM" && hour === 12) hour = 0;
+  const slotDateTime = new Date(date);
+  slotDateTime.setHours(hour, minute, 0, 0);
+  return slotDateTime > now;
+}
+
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+  const deg2rad = (deg) => deg * (Math.PI / 180);
+  const R = 6371;
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(deg2rad(lat1)) *
+      Math.cos(deg2rad(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// Pricing logic
 const packagePrices = {
   Hatchback: { Basic: 200, Premium: 300, Plus: 400 },
   "Compact SUV": { Basic: 220, Premium: 350, Plus: 600 },
@@ -20,46 +73,6 @@ const allTimeSlots = [
   "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"
 ];
 
-function isSlotFuture(date, slot) {
-  const now = new Date();
-  const [hourStr, modifier] = slot.split(" ");
-  let [hour, minute] = hourStr.split(":").map(Number);
-  if (modifier === "PM" && hour !== 12) hour += 12;
-  if (modifier === "AM" && hour === 12) hour = 0;
-  const slotDateTime = new Date(date);
-  slotDateTime.setHours(hour, minute, 0, 0);
-  return slotDateTime > now;
-}
-
-function formatDate(date) {
-  return date.toISOString().split("T")[0];
-}
-
-function getNext7Days() {
-  const now = new Date();
-  const days = [];
-  let added = 0;
-  let i = 0;
-
-  while (added < 7) {
-    const d = new Date();
-    d.setDate(now.getDate() + i);
-    const isToday = i === 0;
-    const isAfter5PM = now.getHours() >= 17;
-
-    if (isToday && isAfter5PM) {
-      i++;
-      continue;
-    }
-
-    days.push(d);
-    i++;
-    added++;
-  }
-
-  return days;
-}
-
 export default function CarWashForm() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
@@ -73,32 +86,63 @@ export default function CarWashForm() {
   const [selectedTime, setSelectedTime] = useState("");
   const [status, setStatus] = useState("idle");
   const [bookedSlots, setBookedSlots] = useState({});
+  const [store, setStore] = useState(null);
+  const [locationAllowed, setLocationAllowed] = useState(true);
 
   const total = useMemo(() => {
     const { vehicleType, packageTier, express } = form;
-    const basePrice = vehicleType && packageTier ? packagePrices[vehicleType]?.[packageTier] || 0 : 0;
-    return basePrice + (express ? 199 : 0);
+    const base = vehicleType && packageTier ? packagePrices[vehicleType]?.[packageTier] || 0 : 0;
+    return base + (express ? 199 : 0);
   }, [form]);
 
+  // Get user's location and find nearest store
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const { data, error } = await supabase.from("stores").select("*");
+        if (error) return;
+
+        const nearest = data.find((s) => {
+          if (!s.latitude || !s.longitude) return false;
+          const dist = getDistanceFromLatLonInKm(
+            latitude, longitude,
+            parseFloat(s.latitude),
+            parseFloat(s.longitude)
+          );
+          return dist <= 5;
+        });
+
+        if (nearest) {
+          setStore(nearest);
+        } else {
+          setStore(null);
+        }
+      },
+      () => {
+        setLocationAllowed(false);
+      }
+    );
+  }, []);
+
+  // Fetch slots for selected date
   useEffect(() => {
     const fetchSlots = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("bookings")
-          .select("time")
-          .eq("date", formatDate(selectedDate));
-        if (error) throw error;
-        const slots = data.reduce((acc, entry) => {
-          acc[entry.time] = (acc[entry.time] || 0) + 1;
-          return acc;
-        }, {});
-        setBookedSlots(slots);
-      } catch (err) {
-        console.error("Failed to fetch bookings:", err);
-      }
+      if (!store) return;
+      const { data, error } = await supabase
+        .from("carwash")
+        .select("time")
+        .eq("date", formatDate(selectedDate))
+        .eq("store_id", store.id);
+      if (error) return;
+      const slots = data.reduce((acc, entry) => {
+        acc[entry.time] = (acc[entry.time] || 0) + 1;
+        return acc;
+      }, {});
+      setBookedSlots(slots);
     };
     fetchSlots();
-  }, [selectedDate]);
+  }, [selectedDate, store]);
 
   const isNextDisabled = () => {
     if (step === 1) return !selectedTime;
@@ -110,37 +154,47 @@ export default function CarWashForm() {
   const handleSubmit = async () => {
     setStatus("submitting");
     const payload = {
-      name: form.name,
-      phone: form.phone,
-      express: form.express,
-      vehicle_type: form.vehicleType,
-      package: form.packageTier,
-      date: formatDate(selectedDate),
-      time: selectedTime,
-      price: total
-    };
+  name: form.name,
+  phone: form.phone,
+  express: form.express,
+  vehicle_type: form.vehicleType,
+  package: form.packageTier,
+  date: formatDate(selectedDate),
+  time: selectedTime,
+  price: total,
+  store_id: store?.id,
+  lead_source: "Website",  // <-- NEW
+  remark: null             // <-- Optional
+};
+
+
     try {
-      const { error } = await supabase.from("bookings").insert([payload]);
+      const { error } = await supabase.from("carwash").insert([payload]);
       if (error) throw error;
       setStatus("success");
       setStep(5);
     } catch (err) {
-      console.error("Booking insert failed:", err);
       setStatus("error");
       setStep(5);
     }
   };
 
+  const saveLead = async () => {
+    await supabase.from("leads").insert([{
+      name: form.name,
+      phone: form.phone,
+      city: "Unknown",
+      vehicle: form.vehicleType || "Unknown",
+      issue: "Out of service area",
+      source: "Website",
+      remark: "Location not serviceable"
+    }]);
+  };
+
   const reset = () => {
     setStep(1);
     setStatus("idle");
-    setForm({
-      name: "",
-      phone: "",
-      express: false,
-      vehicleType: "",
-      packageTier: ""
-    });
+    setForm({ name: "", phone: "", express: false, vehicleType: "", packageTier: "" });
     setSelectedDate(getNext7Days()[0]);
     setSelectedTime("");
   };
@@ -152,21 +206,71 @@ export default function CarWashForm() {
   const getSlotBgColor = (booked) =>
     booked >= 8 ? "bg-red-100" : booked >= 5 ? "bg-yellow-100" : booked >= 1 ? "bg-green-100" : "bg-white";
 
+  // UI RENDER
   const renderStep = () => {
+    if (!store && locationAllowed) {
+      return (
+        <div className="text-center py-10">
+          <h2 className="text-xl font-semibold text-gray-800">⏳ Checking nearest service...</h2>
+        </div>
+      );
+    }
+
+    if (!store && !locationAllowed) {
+      return (
+        <div className="text-center py-10 space-y-4">
+          <h2 className="text-xl font-semibold text-red-600">Location Required</h2>
+          <p className="text-sm text-gray-600">We need your location to show available slots near you.</p>
+        </div>
+      );
+    }
+
+    if (!store) {
+      return (
+        <div className="text-center py-10 space-y-6">
+          <h2 className="text-xl font-semibold text-gray-800">😞 Not in Service Area</h2>
+          <p className="text-gray-500">We're not available in your area yet. Enter details and we'll reach out when we are.</p>
+          <div className="grid gap-3 max-w-sm mx-auto">
+            <input
+              type="text"
+              placeholder="Your Name"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="border rounded-lg p-3 w-full"
+            />
+            <input
+              type="tel"
+              placeholder="10-digit Mobile Number"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value.slice(0, 10).replace(/[^0-9]/g, "") })}
+              className="border rounded-lg p-3 w-full"
+            />
+            <button
+              onClick={saveLead}
+              className="bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition"
+            >
+              Notify Me When Available
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     if (step === 1) {
-      const next7Days = getNext7Days();
+      const days = getNext7Days();
       return (
         <>
           <StepTitle title="Select Date" />
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 mb-3 w-full">
-            {next7Days.map((date) => (
+            {days.map((date) => (
               <button
                 key={date.toISOString()}
                 onClick={() => setSelectedDate(date)}
-                className={`px-4 py-2 rounded-lg border text-sm text-center w-full ${formatDate(date) === formatDate(selectedDate)
+                className={`px-4 py-2 rounded-lg border text-sm text-center w-full ${
+                  formatDate(date) === formatDate(selectedDate)
                     ? "bg-blue-600 text-white"
                     : "bg-white text-gray-800 border-gray-300 hover:border-blue-400"
-                  }`}
+                }`}
               >
                 {date.toLocaleDateString("en-IN", {
                   weekday: "short",
@@ -213,7 +317,7 @@ export default function CarWashForm() {
     if (step === 2) {
       return (
         <>
-          <StepTitle title="2. Choose Vehicle Type" />
+          <StepTitle title="Choose Vehicle Type" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             {Object.keys(packagePrices).map((vehicle) => (
               <button
@@ -259,7 +363,7 @@ export default function CarWashForm() {
     if (step === 3) {
       return (
         <>
-          <StepTitle title="3. Enter Your Details" />
+          <StepTitle title="Enter Your Details" />
           <div className="grid gap-4">
             <input
               type="text"
@@ -286,9 +390,9 @@ export default function CarWashForm() {
     if (step === 4) {
       return (
         <>
-          <StepTitle title="4. Additional: Want to Save Time?" />
+          <StepTitle title="Optional: Make it Express" />
           <p className="text-center text-sm text-gray-700 mb-4">
-            Want to make it express? We’ll finish your car in under 35 minutes — without compromising quality. Add ₹199 to skip the line and save hours.
+            We'll finish in under 35 mins. Add ₹199 to skip the line.
           </p>
           <label className="inline-flex items-center justify-center">
             <input
@@ -332,9 +436,11 @@ export default function CarWashForm() {
   };
 
   return (
-    <div className="bg-white px-2 sm:px-4 md:px-6 py-6 sm:py-8 rounded-xl shadow-2xl w-full max-w-7xl mx-auto font-sans">
-      <div className="mb-6 sm:mb-8 text-center">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Book Your Car Wash, Don’t Wait!</h1>
+    <div className="bg-white px-4 py-6 sm:px-6 sm:py-8 rounded-xl shadow-2xl w-full max-w-5xl mx-auto font-sans">
+      <div className="mb-6 text-center">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          Book Your Car Wash, Don’t Wait!
+        </h1>
         <p className="text-sm text-gray-600 mt-2">
           Foam Wash, Underbody, or Detailing — fast and clean, just the way it should be.
         </p>
@@ -343,7 +449,10 @@ export default function CarWashForm() {
         <>
           <div className="mb-6">
             <div className="bg-gray-200 rounded-full h-2">
-              <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${(step - 1) * 25}%` }}></div>
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all"
+                style={{ width: `${(step - 1) * 25}%` }}
+              ></div>
             </div>
           </div>
           {renderStep()}
